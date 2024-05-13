@@ -8,18 +8,25 @@ from utils.youtube import make_youtube
 import pandas as pd
 
 from streamlit import cache_data
+import streamlit as st
+
+from googleapiclient.errors import HttpError
 
 
 def prepare_channel_data(channel_ids: list[str], api_key) -> pd.DataFrame | str:
-    youtube = make_youtube(api_key)
-    channel_data = get_channel_stats(youtube, channel_ids)
-    if isinstance(channel_data, str):
-        if channel_data == "error":
-            return channel_data
-    numeric_cols = ["subscribers", "views", "totalVideos"]
-    channel_data[numeric_cols] = channel_data[numeric_cols].apply(
-        pd.to_numeric, errors="coerce"
-    )
+    try:
+        youtube = make_youtube(api_key)
+        channel_data = get_channel_stats(youtube, channel_ids)
+        if isinstance(channel_data, str):
+            if channel_data == "error":
+                return channel_data
+        numeric_cols = ["subscribers", "views", "totalVideos"]
+        channel_data[numeric_cols] = channel_data[numeric_cols].apply(
+            pd.to_numeric, errors="coerce"
+        )
+    except HttpError:
+        st.write("Not valid api_key")
+        return "error"
 
     return channel_data
 

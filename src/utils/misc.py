@@ -85,9 +85,11 @@ def make_subscribers_df(channel_data) -> pd.DataFrame:
             "channelName": channel_name,
             "subscribers": subscribers,
         }
+    
+    old_subscribers_df = subscribers_df.copy()
 
     subscribers_df.set_index("channelName", inplace=True)
-    return subscribers_df
+    return old_subscribers_df, subscribers_df
 
 @cache_data
 def make_views_df(channel_data) -> pd.DataFrame:
@@ -101,10 +103,12 @@ def make_views_df(channel_data) -> pd.DataFrame:
         views = row["views"]
 
         views_df.loc[len(views_df)] = {"channelName": channel_name, "views": views}
+    
+    old_view_df = views_df.copy()
 
     views_df.set_index("channelName", inplace=True)
 
-    return views_df
+    return old_view_df, views_df
 
 @cache_data
 def transfrom_video(video_df: pd.DataFrame) -> pd.DataFrame:
@@ -143,6 +147,8 @@ def plot_cloud(wordcloud):
     plt.axis("off")
     st.pyplot(fig)
 
+    return fig
+
 @cache_data
 def make_wordcloud(video_df: pd.DataFrame):
     stop_words = set(stopwords.words("english"))
@@ -180,8 +186,8 @@ def make_day(video_df: pd.DataFrame) -> pd.DataFrame:
     # Create a DataFrame for plotting
     day_df = pd.DataFrame({"Day": day_df.index, "Count": day_df.values})
 
-    # Plotting the bar chart
+    old_day_df = day_df.copy()
 
     day_df.set_index("Day", inplace=True)
 
-    return day_df
+    return old_day_df, day_df
