@@ -162,7 +162,7 @@ def get_comments_in_videos(youtube, video_ids):
 
             comments_in_video = [
                 comment["snippet"]["topLevelComment"]["snippet"]["textOriginal"]
-                for comment in response["items"][0:10]
+                for comment in response["items"][0:100]
             ]
             comments_in_video_info = {
                 "video_id": video_id,

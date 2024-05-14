@@ -68,7 +68,7 @@ def get_evals():
     eval_ds = CustomDataset(corpus)
     eval_dataloader = DataLoader(eval_ds, batch_size=10)
 
-    return eval_ds, eval_dataloader
+    return eval_ds, eval_dataloader, corpus
 
 @cache_data
 def make_subscribers_df(channel_data) -> pd.DataFrame:
