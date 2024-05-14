@@ -12,6 +12,8 @@ import streamlit as st
 
 from googleapiclient.errors import HttpError
 
+from neo.database import open_driver, close_driver, run_query
+
 
 def prepare_channel_data(channel_ids: list[str], api_key) -> pd.DataFrame | str:
     try:
@@ -45,6 +47,12 @@ def get_video_statistics(channel_data: pd.DataFrame, api_key):
             channel_data["channelName"] == c, "playlistId"
         ].iloc[0]
         video_ids = get_video_ids(youtube, playlist_id)
+
+        query = "CREATE (c:Channel {name: '" + c + "'})"
+        
+        driver = open_driver()
+        with driver.session() as session:
+            session.run(query)
 
         # get video data
         video_data = get_video_details(youtube, video_ids)

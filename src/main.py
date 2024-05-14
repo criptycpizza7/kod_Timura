@@ -46,6 +46,10 @@ from fpdf import FPDF
 
 import shutil
 
+from neo.database import open_driver, close_driver, run_query
+
+driver = open_driver()
+
 
 if "submit" not in st.session_state:
     st.session_state.submit = False
@@ -155,6 +159,38 @@ if st.session_state.submit:
 
     video_df = transfrom_video(video_df)
 
+    # users
+    for index, row in comments_df.iterrows():
+        comments = row["comments"]
+
+        users = [{"name": item["author"][1:]} for item in comments]
+        query = """UNWIND $users AS user CREATE (u:User {name: user.name})
+                """
+        with driver.session() as session:
+            session.run(query, users=users)
+    
+    # relation
+    for index, row in comments_df.iterrows():
+        comments = row["comments"]
+
+        for item in comments:
+            author = item["author"]
+            video_id = row["video_id"]
+
+            for index, row_vid in video_df.iterrows():
+                if row_vid["video_id"] == video_id:
+                    query = "MATCH (u:User {name: '" + author + "'}), (c:Channel {name: '" + row_vid["channelTitle"] + "'}) CREATE (u)-[:SUBSCRIBED_TO]->(c);"
+                    with driver.session() as session:
+                        session.run(query)
+                break
+
+
+        users = [{"name": item["author"][1:]} for item in comments]
+        query = """UNWIND $users AS user CREATE (u:User {name: user.name})
+                """
+        with driver.session() as session:
+            session.run(query, users=users)
+
     # fig = plt.figure(figsize=(18, 6))
     # sns.violinplot(x="channelTitle", y="viewCount", data=video_df)
     # fig.suptitle("Просмотры по каналу", fontsize=14)
@@ -196,7 +232,7 @@ if st.session_state.submit:
 
     if st.session_state.hf_api_key:
         model = get_model(st.session_state.hf_api_key)
-        eval_ds, eval_dataloader, corpus = get_evals()
+        eval_ds, eval_dataloader, corpus = get_evals(comments_df)
 
         embeddings = make_embeddings(model, eval_dataloader)
 
@@ -227,7 +263,7 @@ if st.session_state.submit:
         st.scatter_chart(emb_2d, x="x1", y="x2", color="label", width=800, height=600)
 
         def show_examples(cluster, n):
-            for i in range(n):
+            for i in range(min(n, len(corpus[emb_2d['label'] == cluster]))):
                 st.write(i, corpus[emb_2d['label'] == cluster][i].split('.')[0])
 
         show_examples(cluster=1, n=10)
@@ -239,6 +275,7 @@ if st.session_state.submit:
 
     if cols2[1].button(label="Назад", use_container_width=True): 
         st.session_state.submit = False
+        st.rerun()
 
     pdf_name = "src/contents/plots.pdf"
 

@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 from utils.custom_dataset import CustomDataset
 
-
 import pandas as pd
 from torch.utils.data import DataLoader
 
@@ -18,6 +17,8 @@ import streamlit as st
 
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
+
+import numpy as np
 
 
 def is_channel_id_provided(channel_ids: list[str]) -> bool:
@@ -59,11 +60,15 @@ def make_embeddings(model, eval_dataloader) -> torch.Tensor:
         return embeddings
 
 
-def get_evals():
+def get_evals(df):
 
-    df = pd.read_csv("./src/contents/comments_data_top10_channels.csv")
+    comments = []
 
-    corpus = df["comments"].to_numpy()
+    for index, row in df.iterrows():
+        items = row["comments"]
+        comments.extend([item["comment"] for item in items])
+
+    corpus = np.array(comments)
 
     eval_ds = CustomDataset(corpus)
     eval_dataloader = DataLoader(eval_ds, batch_size=10)
