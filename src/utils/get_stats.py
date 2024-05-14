@@ -165,7 +165,7 @@ def get_comments_in_videos(youtube, video_ids):
                  "comment": comment["snippet"]["topLevelComment"]["snippet"]["textOriginal"],
                  "author": comment["snippet"]["topLevelComment"]["snippet"]["authorDisplayName"]
                 }
-                for comment in response["items"][0:10]
+                for comment in response["items"][0:3]
             ]
 
             comments_in_video_info = {

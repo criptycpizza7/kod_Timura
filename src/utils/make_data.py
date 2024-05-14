@@ -49,6 +49,8 @@ def get_video_statistics(channel_data: pd.DataFrame, api_key):
         video_ids = get_video_ids(youtube, playlist_id)
 
         query = "CREATE (c:Channel {name: '" + c + "'})"
+
+        print(query)
         
         driver = open_driver()
         with driver.session() as session:

@@ -177,19 +177,13 @@ if st.session_state.submit:
             author = item["author"]
             video_id = row["video_id"]
 
-            for index, row_vid in video_df.iterrows():
+            for index2, row_vid in video_df.iterrows():
                 if row_vid["video_id"] == video_id:
-                    query = "MATCH (u:User {name: '" + author + "'}), (c:Channel {name: '" + row_vid["channelTitle"] + "'}) CREATE (u)-[:SUBSCRIBED_TO]->(c);"
+                    query = "MATCH (u:User {name: '" + author[1:] + "'}), (c:Channel {name: '" + row_vid["channelTitle"] + "'}) CREATE (u)-[:SUBSCRIBED_TO]->(c);"
+                    print(query)
                     with driver.session() as session:
                         session.run(query)
                 break
-
-
-        users = [{"name": item["author"][1:]} for item in comments]
-        query = """UNWIND $users AS user CREATE (u:User {name: user.name})
-                """
-        with driver.session() as session:
-            session.run(query, users=users)
 
     # fig = plt.figure(figsize=(18, 6))
     # sns.violinplot(x="channelTitle", y="viewCount", data=video_df)
@@ -232,7 +226,7 @@ if st.session_state.submit:
 
     if st.session_state.hf_api_key:
         model = get_model(st.session_state.hf_api_key)
-        eval_ds, eval_dataloader, corpus = get_evals(comments_df)
+        eval_ds, eval_dataloader, corpus, authors = get_evals(comments_df)
 
         embeddings = make_embeddings(model, eval_dataloader)
 
@@ -245,6 +239,10 @@ if st.session_state.submit:
             metric="cosine",
             linkage="average",
         ).fit(emb_15d)
+        # corpus_f = open("corpus.txt", 'w')
+        # authors_f = open("authors.txt", "w")
+        # print(corpus, file=corpus_f)
+        # print(authors, file=authors_f)
 
         pca = PCA(n_components=2, random_state=42)
         emb_2d = pd.DataFrame(pca.fit_transform(embeddings), columns=["x1", "x2"])
@@ -265,6 +263,7 @@ if st.session_state.submit:
         def show_examples(cluster, n):
             for i in range(min(n, len(corpus[emb_2d['label'] == cluster]))):
                 st.write(i, corpus[emb_2d['label'] == cluster][i].split('.')[0])
+                st.write(authors[emb_2d['label'] == cluster][i])
 
         show_examples(cluster=1, n=10)
 

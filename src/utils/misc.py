@@ -59,21 +59,20 @@ def make_embeddings(model, eval_dataloader) -> torch.Tensor:
         embeddings = embeddings.cpu().numpy()
         return embeddings
 
-
 def get_evals(df):
-
     comments = []
 
     for index, row in df.iterrows():
         items = row["comments"]
-        comments.extend([item["comment"] for item in items])
+        comments.extend([(item["comment"], item["author"]) for item in items])
 
-    corpus = np.array(comments)
+    corpus = np.array([item[0] for item in comments])  # Extract only comments for processing
+    authors = np.array([item[1] for item in comments])  # Maintain a separate list of authors
 
     eval_ds = CustomDataset(corpus)
     eval_dataloader = DataLoader(eval_ds, batch_size=10)
 
-    return eval_ds, eval_dataloader, corpus
+    return eval_ds, eval_dataloader, corpus, authors
 
 @cache_data
 def make_subscribers_df(channel_data) -> pd.DataFrame:
