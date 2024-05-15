@@ -32,7 +32,6 @@ def prepare_channel_data(channel_ids: list[str], api_key) -> pd.DataFrame | str:
 
     return channel_data
 
-@cache_data
 def get_video_statistics(channel_data: pd.DataFrame, api_key):
     # Create a dataframe with video statistics and comments from all channels
 

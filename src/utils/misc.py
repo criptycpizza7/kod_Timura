@@ -155,15 +155,13 @@ def plot_cloud(wordcloud):
 
 @cache_data
 def make_wordcloud(video_df: pd.DataFrame):
-    stop_words = set(stopwords.words("english"))
+    stop_words = set(stopwords.words("english", "russian"))
     video_df["title_no_stopwords"] = video_df["title"].apply(
         lambda x: [item for item in str(x).split() if item not in stop_words]
     )
 
     all_words = list([a for b in video_df["title_no_stopwords"].tolist() for a in b])
     all_words_str = " ".join(all_words)
-
-
 
     return WordCloud(
         width=2000,
@@ -195,3 +193,7 @@ def make_day(video_df: pd.DataFrame) -> pd.DataFrame:
     day_df.set_index("Day", inplace=True)
 
     return old_day_df, day_df
+
+def show_examples(corpus, emb_2d, cluster, n):
+    for i in range(min(n, len(corpus[emb_2d['label'] == cluster]))):
+        st.write(i, corpus[emb_2d['label'] == cluster][i].split('.')[0])

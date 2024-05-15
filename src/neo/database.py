@@ -1,10 +1,7 @@
 from neo4j import GraphDatabase
 
-URI = "bolt://localhost"
-AUTH = ("neo4j", "12345678")
-
 def open_driver():
-    URI = "bolt://localhost"
+    URI = "neo4j://94.228.122.139:7687"
     AUTH = ("neo4j", "12345678")
 
     return GraphDatabase.driver(URI, auth=AUTH)
