@@ -46,7 +46,7 @@ from fpdf import FPDF
 
 import shutil
 
-from neo.database import open_driver, close_driver, run_query
+from neo.database import open_driver
 
 from py2neo import Graph
 import networkx as nx
@@ -120,7 +120,7 @@ if not st.session_state.submit:
     if st.session_state.submit and is_channel_id_provided(channel_ids):
         st.rerun()
     
-    st.session_state.analysis = not st.checkbox("Продвинутая аналитика")
+    st.session_state.analysis = st.checkbox("Продвинутая аналитика")
 
 if st.session_state.submit:
 
@@ -211,8 +211,8 @@ if st.session_state.submit:
     sns.violinplot(x="channelTitle", y="viewCount", data=video_df)
     fig.suptitle("Просмотры по каналу", fontsize=14)
 
-    plt.title("Скрипичная диаграмма")
-    st.subheader("Скрипичная диаграмма")
+    plt.title("Расределение промотров по каналам")
+    st.subheader("Расределение промотров по каналам")
     st.pyplot(fig)
 
     img3 = "violin.png"
@@ -221,7 +221,7 @@ if st.session_state.submit:
     pdf.image(img3, x=0, y=0, h=pdf.h, w=pdf.w)
     plt.clf()
 
-
+    st.subheader("Облако слов")
     wordcloud = make_wordcloud(video_df)
 
     fig = plot_cloud(wordcloud)
@@ -234,13 +234,13 @@ if st.session_state.submit:
     plt.clf()
 
     old_day_df, day_df = make_day(video_df)
-
+    st.subheader("Выпуск видео по дням недели")
     st.bar_chart(day_df)
 
 
     fig = plt.bar(x=old_day_df["Day"], height=old_day_df["Count"])
 
-    plt.title("Просмотры по дням")
+    plt.title("Выпуск видео по дням недели")
     img5 = "day.png"
     plt.savefig(img5)
     pdf.add_page()
@@ -342,6 +342,7 @@ if st.session_state.submit:
             plt.savefig(graph_img)
             pdf.add_page()
             pdf.image(graph_img, x=0, y=0, h=pdf.h, w=pdf.w)
+            st.subheader("Граф базы данных")
             st.image(graph_img)
             plt.clf()
 
