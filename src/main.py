@@ -70,6 +70,13 @@ if st.session_state.start:
 
 if not st.session_state.submit:
 
+    query = """
+    MATCH (n)
+    DETACH DELETE n;
+    """
+    with driver.session() as session:
+        session.run(query)
+
     if "n_rows" not in st.session_state:
         st.session_state.n_rows = 1
 
@@ -341,14 +348,6 @@ if st.session_state.submit:
                 for index, result in enumerate(results):
                     st.write(f"Кластер {index + 1}")
                     show_examples(corpus, emb_2d, int(result["cl"]["name"]), 10)
-            
-            
-            query = """
-            MATCH (n)
-            DETACH DELETE n;
-            """
-            with driver.session() as session:
-                session.run(query)
 
         else:
             st.write("hf апи ключ не предоставлен")
