@@ -68,6 +68,7 @@ if st.session_state.start:
     st.session_state.start = False
 
 
+
 if not st.session_state.submit:
 
     query = """
@@ -128,6 +129,7 @@ if not st.session_state.submit:
 
 if st.session_state.submit:
 
+    st.session_state.start = True
 
     st.subheader("Графики")
 
@@ -177,6 +179,8 @@ if st.session_state.submit:
 
     st.subheader("Просмотры")
     st.bar_chart(views_df)
+
+    # time.sleep(1)
 
     video_df, comments_df = get_video_statistics(channel_data, st.session_state.api_key)
 
@@ -354,7 +358,7 @@ if st.session_state.submit:
     
     cols2 = st.columns([4, 2, 4])
 
-    st.session_state.start = cols2[1].button(label="Назад", use_container_width=True)
+    cols2[1].button(label="Назад", use_container_width=True)
 
     pdf_name = "src/contents/plots.pdf"
 
@@ -368,5 +372,5 @@ if st.session_state.submit:
             file_name="Files.zip",
         )
 
-if st.session_state.submit and not is_channel_id_provided(channel_ids):
+if st.session_state.submit and not is_channel_id_provided(st.session_state.channel_ids):
     st.write("Не предоставлены id каналов")

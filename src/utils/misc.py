@@ -182,11 +182,21 @@ def make_day(video_df: pd.DataFrame) -> pd.DataFrame:
         "Saturday",
         "Sunday",
     ]
+
+    weekdays_ru = [
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+        "Воскресенье",
+    ]
     # Assume the correct column name is 'pushblishDayName'
     day_df = video_df["pushblishDayName"].value_counts().reindex(weekdays, fill_value=0)
 
     # Create a DataFrame for plotting
-    day_df = pd.DataFrame({"Day": day_df.index, "Count": day_df.values})
+    day_df = pd.DataFrame({"Day": weekdays_ru, "Count": day_df.values})
 
     old_day_df = day_df.copy()
 
