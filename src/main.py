@@ -51,7 +51,7 @@ from neo.database import open_driver
 from py2neo import Graph
 import networkx as nx
 
-
+# драйвер для подключения к neo4j
 driver = open_driver()
 
 if "submit" not in st.session_state:
@@ -90,6 +90,7 @@ if not st.session_state.submit:
 
     cols = st.columns([3, 3, 13])
 
+    # кнопки добавления и удаления
     add = cols[0].button(label="Добавить")
     delete = cols[1].button(label="Удалить")
 
@@ -105,6 +106,7 @@ if not st.session_state.submit:
 
     channel_ids = []
 
+    # источники для анализа
     for i in range(st.session_state.n_rows):
         channel_ids.append(
             st.text_input(
@@ -125,6 +127,7 @@ if not st.session_state.submit:
     if st.session_state.submit and is_channel_id_provided(channel_ids):
         st.rerun()
     
+    # параметры для сбора данных
     st.session_state.analysis = st.checkbox("Продвинутая аналитика")
 
 if st.session_state.submit:
@@ -144,6 +147,7 @@ if st.session_state.submit:
         st.session_state.submit = False
         st.rerun()
 
+    # подключение к апи, получение данных, преобразование в DataFrame
     channel_data = prepare_channel_data(channel_ids, st.session_state.api_key)
 
     if isinstance(channel_data, str):
@@ -151,7 +155,7 @@ if st.session_state.submit:
         st.rerun()
 
     old_subscribers_df, subscribers_df = make_subscribers_df(channel_data)
-
+    # подписчики
     fig = plt.bar(x=old_subscribers_df["channelName"], height=old_subscribers_df["subscribers"])
 
     plt.title("Подписчки")
@@ -168,7 +172,7 @@ if st.session_state.submit:
     old_views_df, views_df = make_views_df(channel_data)
 
     fig = plt.bar(x=old_views_df["channelName"], height=old_views_df["views"])
-
+    # просмотры
     plt.title("Просмотры")
 
     img2 = "bar_2.png"
@@ -179,9 +183,7 @@ if st.session_state.submit:
 
     st.subheader("Просмотры")
     st.bar_chart(views_df)
-
-    # time.sleep(1)
-
+    # каналы в neo4j добавляются в этой функции
     video_df, comments_df = get_video_statistics(channel_data, st.session_state.api_key)
 
     video_df.to_csv('./src/contents/video_data_top10_channels.csv')
@@ -192,7 +194,7 @@ if st.session_state.submit:
     # users
     for index, row in comments_df.iterrows():
         comments = row["comments"]
-
+        # создание пользователей neo4j
         users = [{"name": item["author"][1:]} for item in comments]
         query = """UNWIND $users AS user CREATE (u:User {name: user.name})
                 """
@@ -206,14 +208,14 @@ if st.session_state.submit:
         for item in comments:
             author = item["author"]
             video_id = row["video_id"]  
-
+            # создание отношений пользователей и каналов neo4j
             for index2, row_vid in video_df.iterrows():
                 if row_vid["video_id"] == video_id:
                     query = "MATCH (u:User {name: '" + author[1:] + "'}), (c:Channel {name: '" + row_vid["channelTitle"] + "'}) MERGE (u)-[:SUBSCRIBED_TO]->(c);"
                     with driver.session() as session:
                         session.run(query)
                     break
-
+    # просмотры по каналу (скрипичный график)
     fig = plt.figure(figsize=(18, 6))
     sns.violinplot(x="channelTitle", y="viewCount", data=video_df)
     fig.suptitle("Просмотры по каналу", fontsize=14)
@@ -227,7 +229,7 @@ if st.session_state.submit:
     pdf.add_page()
     pdf.image(img3, x=0, y=0, h=pdf.h, w=pdf.w)
     plt.clf()
-
+    # наиболее частые слова в названиях
     st.subheader("Облако слов")
     wordcloud = make_wordcloud(video_df)
 
@@ -239,7 +241,7 @@ if st.session_state.submit:
     pdf.add_page()
     pdf.image(img4, x=0, y=0, h=pdf.h, w=pdf.w)
     plt.clf()
-
+    # частота по дням недель
     old_day_df, day_df = make_day(video_df)
     st.subheader("Выпуск видео по дням недели")
 
@@ -254,6 +256,8 @@ if st.session_state.submit:
     pdf.image(img5, x=0, y=0, h=pdf.h, w=pdf.w)
     st.pyplot(fig)
     plt.clf()
+
+    # анализ соц сетей
     if st.session_state.analysis:
         if st.session_state.hf_api_key:
             # pass
@@ -261,7 +265,7 @@ if st.session_state.submit:
             eval_ds, eval_dataloader, corpus, authors = get_evals(comments_df)
 
             embeddings = make_embeddings(model, eval_dataloader)
-
+            # кластеризация пользователей
             pca = PCA(n_components=15, random_state=42)
             emb_15d = pca.fit_transform(embeddings)
 
@@ -277,12 +281,12 @@ if st.session_state.submit:
             emb_2d = pd.DataFrame(pca.fit_transform(embeddings), columns=["x1", "x2"])
             emb_2d["label"] = clustering.labels_
             emb_2d["label"].nunique()
-
+            # создание кластеров neo4j
             for index, item in enumerate(emb_2d["label"]):
                 query = "CREATE (cl:Cluster {name: '" + str(index + 1) + "'})"
                 with driver.session() as session:
                     session.run(query)
-            
+            # создание связей пользователей и кластеров neo4j
             for index in range(len(clustering.labels_)):
                 items = authors[emb_2d['label'] == index]
                 for author in items:
@@ -343,6 +347,7 @@ if st.session_state.submit:
 
             channel_names = video_df["channelTitle"].unique()
 
+            # вывод полученной графовой бд neo4j
             for name in channel_names:
                 st.write(name)
                 query = "MATCH (c:Channel {name: '" + name + "'})<-[:SUBSCRIBED_TO]-(u:User)-[:CONNECTED_TO]->(cl:Cluster)"
@@ -365,6 +370,7 @@ if st.session_state.submit:
 
     shutil.make_archive("Files", 'zip', "src/contents")
 
+    # сохранение результатов
     pdf.output(pdf_name)
     with open("Files.zip", 'rb') as f:
         cols2[0].download_button(
