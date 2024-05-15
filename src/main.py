@@ -51,7 +51,6 @@ from neo.database import open_driver
 from py2neo import Graph
 import networkx as nx
 
-import icecream as ic
 
 driver = open_driver()
 
@@ -67,8 +66,6 @@ if "analysis" not in st.session_state:
 if st.session_state.start:
     st.session_state.submit = False
     st.session_state.start = False
-
-ic.ic(st.session_state.analysis)
 
 
 if not st.session_state.submit:
@@ -124,7 +121,6 @@ if not st.session_state.submit:
 
 if st.session_state.submit:
 
-    ic.ic(st.session_state.analysis)
 
     st.subheader("Графики")
 
@@ -294,21 +290,6 @@ if st.session_state.submit:
             st.scatter_chart(emb_2d, x="x1", y="x2", color="label", width=800, height=600)
 
             query = """
-                        MATCH (c:Channel {name: 'Corey Schafer'})<-[:SUBSCRIBED_TO]-(u:User)-[:CONNECTED_TO]->(cl:Cluster)
-                        WITH c, cl, COUNT(u) AS userCount
-                        ORDER BY userCount DESC
-                        LIMIT 3
-                        RETURN c, cl, userCount;
-                    """
-            graph = Graph("bolt://94.228.122.139:7687", auth=("neo4j", "12345678"))
-
-            results = graph.run(query).data()
-
-            for index, result in enumerate(results):
-                st.write(f"Кластер {index + 1}")
-                show_examples(corpus, emb_2d, int(result["cl"]["name"]), 10)
-
-            query = """
             MATCH (c:Channel)
             WITH c ORDER BY rand() LIMIT 1
 
@@ -319,6 +300,8 @@ if st.session_state.submit:
             OPTIONAL MATCH (u)-[:CONNECTED_TO]->(cl:Cluster)
             RETURN c, u, collect(distinct cl) AS clusters;
             """
+
+            graph = Graph("bolt://94.228.122.139:7687", auth=("neo4j", "12345678"))
             results = graph.run(query).data()
 
             G = nx.DiGraph()
@@ -345,6 +328,27 @@ if st.session_state.submit:
             st.subheader("Граф базы данных")
             st.image(graph_img)
             plt.clf()
+
+            channel_names = video_df["channelTitle"].unique()
+
+            for name in channel_names:
+                st.write(name)
+                query = "MATCH (c:Channel {name: '" + name + "'})<-[:SUBSCRIBED_TO]-(u:User)-[:CONNECTED_TO]->(cl:Cluster)"
+                query = query + "WITH c, cl, COUNT(u) AS userCount ORDER BY userCount DESC LIMIT 3 RETURN c, cl, userCount;"
+
+                results = graph.run(query).data()
+
+                for index, result in enumerate(results):
+                    st.write(f"Кластер {index + 1}")
+                    show_examples(corpus, emb_2d, int(result["cl"]["name"]), 10)
+            
+            
+            query = """
+            MATCH (n)
+            DETACH DELETE n;
+            """
+            with driver.session() as session:
+                session.run(query)
 
         else:
             st.write("hf апи ключ не предоставлен")
