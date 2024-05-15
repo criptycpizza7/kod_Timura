@@ -242,16 +242,17 @@ if st.session_state.submit:
 
     old_day_df, day_df = make_day(video_df)
     st.subheader("Выпуск видео по дням недели")
-    st.bar_chart(day_df)
 
+    fig = plt.figure()
 
-    fig = plt.bar(x=old_day_df["Day"], height=old_day_df["Count"])
+    plt.bar(x=old_day_df["Day"], height=old_day_df["Count"])
 
     plt.title("Выпуск видео по дням недели")
     img5 = "day.png"
     plt.savefig(img5)
     pdf.add_page()
     pdf.image(img5, x=0, y=0, h=pdf.h, w=pdf.w)
+    st.pyplot(fig)
     plt.clf()
     if st.session_state.analysis:
         if st.session_state.hf_api_key:
